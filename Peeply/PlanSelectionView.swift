@@ -2,8 +2,9 @@
 //  PlanSelectionView.swift
 //  Peeply
 //
-//  Created by Jason LaChance on 1/18/26.
-//
+//  Copyright 2026 Peeply LLC. All rights reserved.
+//  This software is confidential and proprietary property.
+//  Unauthorized copying, modification, or distribution is strictly prohibited.
 
 import SwiftUI
 import SwiftData
@@ -71,6 +72,7 @@ struct PlanSelectionView: View {
         VStack(spacing: 0) {
             PaywallView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(DesignSystem.SemanticColors.screenBackground)
                 .onPurchaseCompleted { customerInfo in
                     Task {
                         await GoMarketMe.shared.syncAllTransactions()
@@ -102,7 +104,7 @@ struct PlanSelectionView: View {
                     showPurchaseError = true
                 }
 
-            #if DEBUG
+#if DEBUG
             Button(action: {
                 Task { @MainActor in
                     completePurchaseFlow()
@@ -110,11 +112,12 @@ struct PlanSelectionView: View {
             }) {
                 Text("Skip Payment (Beta Only)")
                     .font(.caption)
-                    .foregroundStyle(Color.gray)
+                    .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                     .padding(.vertical, 8)
             }
-            #endif
+#endif
         }
+        .background(DesignSystem.SemanticColors.screenBackground)
         .navigationBarBackButtonHidden(true)
         .alert("Purchase Failed", isPresented: $showPurchaseError) {
             Button("OK", role: .cancel) { }

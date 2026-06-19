@@ -2,8 +2,9 @@
 //  SupportView.swift
 //  Peeply
 //
-//  Created by Jason LaChance on 1/18/26.
-//
+//  Copyright 2026 Peeply LLC. All rights reserved.
+//  This software is confidential and proprietary property.
+//  Unauthorized copying, modification, or distribution is strictly prohibited.
 
 import SwiftUI
 import SwiftData
@@ -16,109 +17,64 @@ struct SupportView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteConfirmation = false
     @State private var navigationPath = NavigationPath()
-    
+
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
     }
-    
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             List {
-            // Contact Support
-            Button(action: {
-                if let url = URL(string: "mailto:support@peeplyapp.com") {
-                    openURL(url)
+                Section {
+                    // Contact Support
+                    NavigationRow(title: "Contact Support") {
+                        if let url = URL(string: "mailto:support@peeplyapp.com") {
+                            openURL(url)
+                        }
+                    }
+
+                    // About Peeply
+                    NavigationRow(title: "About Peeply") {
+                        navigationPath.append(AppRoute.about)
+                    }
+
+                    // Privacy Policy
+                    NavigationRow(title: "Privacy Policy") {
+                        navigationPath.append(AppRoute.privacyPolicy)
+                    }
+
+                    // Terms of Service
+                    NavigationRow(title: "Terms of Service") {
+                        navigationPath.append(AppRoute.termsOfService)
+                    }
+
+                    // App Version
+                    HStack {
+                        Text("App Version")
+                            .font(.system(size: 16, weight: .regular, design: .default))
+                            .foregroundStyle(.primary)
+
+                        Spacer()
+
+                        Text(appVersion)
+                            .font(.system(size: 16, weight: .regular, design: .default))
+                            .foregroundStyle(.secondary)
+                    }
                 }
-            }) {
-                HStack {
-                    Text("Contact Support")
-                        .font(.system(size: 16, weight: .regular, design: .default))
-                        .foregroundStyle(Color.peeplyCharcoal)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.3))
-                }
-            }
-            .buttonStyle(.plain)
-            
-            // About Peeply
-            Button(action: {
-                navigationPath.append(AppRoute.about)
-            }) {
-                HStack {
-                    Text("About Peeply")
-                        .font(.system(size: 16, weight: .regular, design: .default))
-                        .foregroundStyle(Color.peeplyCharcoal)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.3))
-                }
-            }
-            .buttonStyle(.plain)
-            
-            // Privacy Policy
-            Button(action: {
-                navigationPath.append(AppRoute.privacyPolicy)
-            }) {
-                HStack {
-                    Text("Privacy Policy")
-                        .font(.system(size: 16, weight: .regular, design: .default))
-                        .foregroundStyle(Color.peeplyCharcoal)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.3))
-                }
-            }
-            .buttonStyle(.plain)
-            
-            // Terms of Service
-            Button(action: {
-                navigationPath.append(AppRoute.termsOfService)
-            }) {
-                HStack {
-                    Text("Terms of Service")
-                        .font(.system(size: 16, weight: .regular, design: .default))
-                        .foregroundStyle(Color.peeplyCharcoal)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.3))
+
+                Section {
+                    // Delete Account
+                    NavigationRow(
+                        title: "Delete Account",
+                        titleColor: .red,
+                        chevronColor: .secondary
+                    ) {
+                        showDeleteConfirmation = true
+                    }
                 }
             }
-            .buttonStyle(.plain)
-            
-            // App Version
-            HStack {
-                Text("App Version")
-                    .font(.system(size: 16, weight: .regular, design: .default))
-                    .foregroundStyle(Color.peeplyCharcoal)
-                Spacer()
-                Text(appVersion)
-                    .font(.system(size: 16, weight: .regular, design: .default))
-                    .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
-            }
-            
-            // Delete Account
-            Button(action: {
-                showDeleteConfirmation = true
-            }) {
-                HStack {
-                    Text("Delete Account")
-                        .font(.system(size: 16, weight: .regular, design: .default))
-                        .foregroundStyle(.red)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.3))
-                }
-            }
-            .buttonStyle(.plain)
-            }
-            .background(Color.peeplyBackground)
             .scrollContentBackground(.hidden)
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Support")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -126,7 +82,7 @@ struct SupportView: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(Color.peeplyCharcoal)
+                            .foregroundStyle(.primary)
                     }
                 }
             }
@@ -143,7 +99,7 @@ struct SupportView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func destinationView(for route: AppRoute) -> some View {
         switch route {
@@ -157,23 +113,47 @@ struct SupportView: View {
             EmptyView()
         }
     }
-    
+
     private func deleteAccount() {
         // Delete all contacts
         for contact in contacts {
             modelContext.delete(contact)
         }
-        
+
         // Delete user
         for user in users {
             modelContext.delete(user)
         }
-        
+
         // Save changes
         try? modelContext.save()
-        
+
         // Dismiss the sheet
         dismiss()
+    }
+}
+
+private struct NavigationRow: View {
+    let title: String
+    var titleColor: Color = .primary
+    var chevronColor: Color = .secondary
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 16, weight: .regular, design: .default))
+                    .foregroundStyle(titleColor)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(chevronColor)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 

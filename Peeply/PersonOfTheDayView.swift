@@ -2,8 +2,9 @@
 //  PersonOfTheDayView.swift
 //  Peeply
 //
-//  Created by Jason LaChance on 1/18/26.
-//
+//  Copyright 2026 Peeply LLC. All rights reserved.
+//  This software is confidential and proprietary property.
+//  Unauthorized copying, modification, or distribution is strictly prohibited.
 
 import SwiftUI
 import UserNotifications
@@ -12,7 +13,7 @@ struct PersonOfTheDayView: View {
     let contact: Contact
     let onDismiss: () -> Void
     @Environment(\.openURL) private var openURL
-    
+
     private var fullName: String {
         if let lastName = contact.lastName, !lastName.isEmpty {
             return "\(contact.firstName) \(lastName)"
@@ -20,22 +21,22 @@ struct PersonOfTheDayView: View {
             return contact.firstName
         }
     }
-    
+
     private var initials: String {
         let firstInitial = contact.firstName.prefix(1).uppercased()
         let lastInitial = contact.lastName?.prefix(1).uppercased() ?? ""
         return "\(firstInitial)\(lastInitial)"
     }
-    
+
     private var contactPhoto: UIImage? {
         guard let photoData = contact.photoData else { return nil }
         return UIImage(data: photoData)
     }
-    
+
     private var primaryPhoneNumber: String? {
         contact.phoneNumbers.first
     }
-    
+
     private func cleanPhoneNumber(_ phoneNumber: String) -> String {
         return phoneNumber.replacingOccurrences(
             of: "[^0-9+]",
@@ -43,54 +44,55 @@ struct PersonOfTheDayView: View {
             options: .regularExpression
         )
     }
-    
+
     private func callPhone(_ phoneNumber: String) {
         let cleaned = cleanPhoneNumber(phoneNumber)
         if let url = URL(string: "tel://\(cleaned)") {
             openURL(url)
         }
     }
-    
+
     private func sendMessage(_ phoneNumber: String) {
         let cleaned = cleanPhoneNumber(phoneNumber)
         if let url = URL(string: "sms://\(cleaned)") {
             openURL(url)
         }
     }
-    
+
     var body: some View {
         ZStack {
-            Color.peeplyBackground
+            DesignSystem.SemanticColors.groupedScreenBackground
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Dismiss button (top-right)
                 HStack {
                     Spacer()
+
                     Button(action: {
                         PersonOfTheDayManager.removeDailyBadgeNotification()
                         onDismiss()
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
+                            .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                     }
                     .padding(.trailing, 20)
                     .padding(.top, 20)
                 }
-                
+
                 Spacer()
-                
+
                 // Content
                 VStack(spacing: 32) {
                     // Headline
                     Text("Your Peeply Person of the Day!")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundStyle(Color.peeplyCharcoal)
+                        .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
-                    
+
                     // Contact photo or initials
                     if let photo = contactPhoto {
                         Image(uiImage: photo)
@@ -122,24 +124,24 @@ struct PersonOfTheDayView: View {
                             .overlay(
                                 Text(initials)
                                     .font(.system(size: 48, weight: .semibold))
-                                    .foregroundStyle(Color.peeplyWhite)
+                                    .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent)
                             )
                     }
-                    
+
                     // Contact name
                     Text(fullName)
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color.peeplyCharcoal)
-                    
+                        .foregroundStyle(DesignSystem.SemanticColors.primaryText)
+
                     // Phone number
                     if let phoneNumber = primaryPhoneNumber {
                         Text(phoneNumber)
                             .font(.body)
-                            .foregroundStyle(Color.peeplyCharcoal.opacity(0.7))
+                            .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                             .padding(.bottom, 8)
                     }
-                    
+
                     // Action buttons
                     if let phoneNumber = primaryPhoneNumber {
                         HStack(spacing: 16) {
@@ -154,7 +156,7 @@ struct PersonOfTheDayView: View {
                                     Text("Call")
                                 }
                                 .font(.headline)
-                                .foregroundStyle(Color.peeplyWhite)
+                                .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
                                 .background(
@@ -166,7 +168,7 @@ struct PersonOfTheDayView: View {
                                 )
                                 .cornerRadius(16)
                             }
-                            
+
                             // Text button
                             Button(action: {
                                 sendMessage(phoneNumber)
@@ -178,10 +180,10 @@ struct PersonOfTheDayView: View {
                                     Text("Text")
                                 }
                                 .font(.headline)
-                                .foregroundStyle(Color.peeplyCharcoal)
+                                .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
-                                .background(Color.peeplyWhite)
+                                .background(DesignSystem.SemanticColors.cardBackground)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
                                         .stroke(
@@ -197,17 +199,17 @@ struct PersonOfTheDayView: View {
                             }
                         }
                         .padding(.horizontal, 32)
-                        
-                        Text("Stop what you are doing and give them a call or text right now and let them know you are thinking of them!")
-                            .font(.subheadline)
-                            .foregroundStyle(Color.peeplyCharcoal.opacity(0.8))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
-                            .padding(.top, 16)
                     }
+
+                    Text("Stop what you are doing and give them a call or text right now and let them know you are thinking of them!")
+                        .font(.subheadline)
+                        .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .padding(.top, 16)
                 }
                 .padding(.vertical, 40)
-                
+
                 Spacer()
             }
         }
