@@ -1,8 +1,10 @@
 //
-//  OnboardingView.swift
-//  Peeply
+// OnboardingView.swift
+// Peeply
 //
-//  Created by Jason LaChance on 1/18/26.
+// Copyright 2026 Peeply LLC. All rights reserved.
+// This software is confidential and proprietary property.
+// Unauthorized copying, modification, or distribution is strictly prohibited.
 //
 
 import SwiftUI
@@ -217,7 +219,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            Color.white
+            DesignSystem.SemanticColors.screenBackground
                 .ignoresSafeArea()
 
             if showWelcome {
@@ -230,44 +232,34 @@ struct OnboardingView: View {
     }
 
     private var welcomeView: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
+        OnboardingScreenLayout(
+            topPadding: 56,
+            footerSpacing: 24,
+            footer: {
+                // Get Started button
+                primaryButton(title: "Let's Go", action: startQuestions)
+                    .padding(.bottom, 32)
+            }
+        ) {
             // Welcome content - top third of page
             VStack(spacing: 32) {
                 // Welcome text
                 Text("We want to get to know you first to customize your experience!")
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundStyle(Color.black)
+                    .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
             }
-            .padding(.top, 56)
             .frame(maxWidth: .infinity)
-
-            Spacer()
-
-            // Get Started button
-            Button(action: startQuestions) {
-                Text("Let's Go")
-                    .font(.headline)
-                    .foregroundStyle(Color.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color.peeplyPink)
-                    .cornerRadius(16)
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 32)
         }
         .onAppear {
             // Set navigation title color
             let appearance = UINavigationBarAppearance()
             appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = UIColor(Color.peeplyWhite)
-            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(Color.peeplyCharcoal)]
-            appearance.titleTextAttributes = [.foregroundColor: UIColor(Color.peeplyCharcoal)]
+            appearance.backgroundColor = UIColor(DesignSystem.SemanticColors.navigationBackground)
+            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(DesignSystem.SemanticColors.primaryText)]
+            appearance.titleTextAttributes = [.foregroundColor: UIColor(DesignSystem.SemanticColors.primaryText)]
             UINavigationBar.appearance().standardAppearance = appearance
             UINavigationBar.appearance().scrollEdgeAppearance = appearance
             UINavigationBar.appearance().compactAppearance = appearance
@@ -275,137 +267,20 @@ struct OnboardingView: View {
     }
 
     private var questionView: some View {
-        VStack(spacing: 0) {
-            // Progress indicator
-            HStack {
-                Spacer()
-                Text("Question \(currentQuestionIndex + 1) of \(questions.count)")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
-                    .padding(.top, 16)
-                    .padding(.trailing, 20)
-            }
-
-            Spacer()
-
-            if currentQuestion.type == .textEntry {
-                VStack(spacing: 12) {
-                    // Question text
-                    Text(currentQuestion.question)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.peeplyCharcoal)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                        .padding(.top, 24)
-
-                    if let subtitle = currentQuestion.subtitle {
-                        Text(subtitle)
-                            .font(.subheadline)
-                            .foregroundStyle(Color.peeplyCharcoal.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
-                    }
-
-                    HStack(spacing: 12) {
-                        TextField("Email address", text: $emailInput)
-                            .textInputAutocapitalization(.never)
-                            .keyboardType(.emailAddress)
-                            .textContentType(.emailAddress)
-                            .submitLabel(.next)
-                            .padding(.horizontal, 16)
-                            .frame(height: 50)
-                            .background(Color.peeplyWhite)
-                            .cornerRadius(16)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(
-                                        showEmailValidationMessage && !isEmailQuestionValid
-                                        ? Color.red.opacity(0.7)
-                                        : Color.clear,
-                                        lineWidth: 1
-                                    )
-                            )
-                            .onSubmit {
-                                answerQuestion()
-                            }
-                            .onChange(of: emailInput) { _, _ in
-                                // Clear the validation state as soon as the user begins correcting input.
-                                if isEmailQuestionValid {
-                                    showEmailValidationMessage = false
-                                }
-                            }
-
-                        Button(action: answerQuestion) {
-                            Image(systemName: "arrow.forward.circle.fill")
-                                .font(.system(size: 32))
-                                .foregroundStyle(
-                                    isEmailQuestionValid
-                                    ? Color.peeplyCharcoal
-                                    : Color.peeplyCharcoal.opacity(0.35)
-                                )
-                        }
-                        .disabled(!isEmailQuestionValid)
-                    }
-                    .padding(.horizontal, 20)
-
-                    if showEmailValidationMessage && !isEmailQuestionValid {
-                        Text("Please enter a valid email address to continue.")
-                            .font(.footnote)
-                            .foregroundStyle(Color.red)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 20)
-                    }
-                }
-            } else {
-                // Question text
-                Text(currentQuestion.question)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.peeplyCharcoal)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 24)
-
-                if let subtitle = currentQuestion.subtitle {
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 24)
-                }
-
-                Spacer()
-
-                // Answer buttons
+        OnboardingScreenLayout(
+            topPadding: 16,
+            horizontalPadding: 20,
+            contentSpacing: 24,
+            footerSpacing: 16,
+            footer: {
                 if currentQuestion.type != .textEntry {
-                    VStack(spacing: 16) {
-                        ForEach(currentQuestion.answers, id: \.self) { answer in
-                            Button(action: answerQuestion) {
-                                Text(answer)
-                                    .font(.headline)
-                                    .foregroundStyle(Color.white)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 50)
-                                    .background(Color.peeplyPink)
-                                    .cornerRadius(16)
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                    .padding(.bottom, 24)
-                }
-
-                // Navigation buttons
-                if currentQuestion.type != .textEntry {
+                    // Navigation buttons
                     HStack {
                         // Skip Onboarding button
                         Button(action: skipOnboarding) {
                             Text("Skip Onboarding")
                                 .font(.subheadline)
-                                .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
+                                .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                         }
 
                         Spacer()
@@ -414,16 +289,188 @@ struct OnboardingView: View {
                         Button(action: skipQuestion) {
                             Text("Skip Question")
                                 .font(.subheadline)
-                                .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
+                                .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                         }
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 32)
                 }
             }
+        ) {
+            VStack(spacing: 24) {
+                // Progress indicator
+                HStack {
+                    Spacer()
 
-            Spacer()
+                    Text("Question \(currentQuestionIndex + 1) of \(questions.count)")
+                        .font(.subheadline)
+                        .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
+                }
+
+                if currentQuestion.type == .textEntry {
+                    emailQuestionSection
+                } else {
+                    multipleChoiceQuestionSection
+                }
+            }
         }
+    }
+
+    private var emailQuestionSection: some View {
+        VStack(spacing: 20) {
+            questionHeader(
+                question: currentQuestion.question,
+                subtitle: currentQuestion.subtitle,
+                topPadding: 0,
+                subtitleTopPadding: 8
+            )
+
+            HStack(spacing: 12) {
+                TextField("Email address", text: $emailInput)
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
+                    .submitLabel(.next)
+                    .padding(.horizontal, 16)
+                    .frame(height: 50)
+                    .background(DesignSystem.SemanticColors.inputBackground)
+                    .cornerRadius(16)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(
+                                showEmailValidationMessage && !isEmailQuestionValid
+                                ? Color.red.opacity(0.7)
+                                : DesignSystem.SemanticColors.border,
+                                lineWidth: 1
+                            )
+                    )
+                    .onSubmit {
+                        answerQuestion()
+                    }
+                    .onChange(of: emailInput) { _, _ in
+                        // Clear the validation state as soon as the user begins correcting input.
+                        if isEmailQuestionValid {
+                            showEmailValidationMessage = false
+                        }
+                    }
+
+                Button(action: answerQuestion) {
+                    Image(systemName: "arrow.forward.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(
+                            isEmailQuestionValid
+                            ? DesignSystem.SemanticColors.primaryText
+                            : DesignSystem.SemanticColors.tertiaryText
+                        )
+                }
+                .disabled(!isEmailQuestionValid)
+            }
+
+            if showEmailValidationMessage && !isEmailQuestionValid {
+                Text("Please enter a valid email address to continue.")
+                    .font(.footnote)
+                    .foregroundStyle(Color.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+            }
+        }
+    }
+
+    private var multipleChoiceQuestionSection: some View {
+        VStack(spacing: 24) {
+            questionHeader(
+                question: currentQuestion.question,
+                subtitle: currentQuestion.subtitle,
+                topPadding: 0,
+                subtitleTopPadding: 0
+            )
+
+            // Answer buttons
+            if currentQuestion.type != .textEntry {
+                VStack(spacing: 16) {
+                    ForEach(currentQuestion.answers, id: \.self) { answer in
+                        Button(action: answerQuestion) {
+                            Text(answer)
+                                .font(.headline)
+                                .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(DesignSystem.SemanticColors.accent)
+                                .cornerRadius(16)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.bottom, 24)
+    }
+
+    private func questionHeader(
+        question: String,
+        subtitle: String?,
+        topPadding: CGFloat,
+        subtitleTopPadding: CGFloat
+    ) -> some View {
+        VStack(spacing: 12) {
+            // Question text
+            Text(question)
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(DesignSystem.SemanticColors.primaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+                .padding(.top, topPadding)
+
+            if let subtitle {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 12)
+                    .padding(.top, subtitleTopPadding)
+            }
+        }
+    }
+
+    private func primaryButton(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(DesignSystem.SemanticColors.accent)
+                .cornerRadius(16)
+        }
+        .padding(.horizontal, 20)
+    }
+}
+
+// Reusable top-anchored onboarding screen shell.
+// Use this for welcome, onboarding, import, and lightweight form screens
+// where the content should stay visually stable across device sizes.
+private struct OnboardingScreenLayout<Content: View, Footer: View>: View {
+    let topPadding: CGFloat
+    var horizontalPadding: CGFloat = 20
+    var contentSpacing: CGFloat = 0
+    var footerSpacing: CGFloat = 0
+    @ViewBuilder let footer: () -> Footer
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: contentSpacing) {
+                content()
+            }
+            .padding(.top, topPadding)
+            .padding(.horizontal, horizontalPadding)
+            .frame(maxWidth: .infinity, alignment: .top)
+
+            Spacer(minLength: footerSpacing)
+
+            footer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
 

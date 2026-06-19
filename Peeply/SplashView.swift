@@ -2,8 +2,9 @@
 //  SplashView.swift
 //  Peeply
 //
-//  Created by Jason LaChance on 1/18/26.
-//
+//  Copyright 2026 Peeply LLC. All rights reserved.
+//  This software is confidential and proprietary property.
+//  Unauthorized copying, modification, or distribution is strictly prohibited.
 
 import SwiftUI
 import SwiftData
@@ -166,7 +167,7 @@ struct SplashView: View {
     var body: some View {
         ZStack {
             // Background
-            Color.peeplyBackground
+            backgroundView
                 .ignoresSafeArea()
 
             if isReturningUser {
@@ -204,6 +205,29 @@ struct SplashView: View {
         }
     }
 
+    @ViewBuilder
+    private var backgroundView: some View {
+        if isReturningUser {
+            DesignSystem.SemanticColors.screenBackground
+        } else {
+            ZStack {
+                Image("SplashBackground")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.1),
+                        Color.black.opacity(0.3),
+                        Color.black.opacity(0.55)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+        }
+    }
+
     private var returningUserView: some View {
         VStack(spacing: 0) {
             Spacer()
@@ -212,14 +236,14 @@ struct SplashView: View {
             VStack(spacing: 16) {
                 Text("Welcome to Peeply!")
                     .font(.system(size: 36, weight: .bold))
-                    .foregroundStyle(Color.peeplyCharcoal)
+                    .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                     .minimumScaleFactor(0.8)
                     .lineLimit(1)
 
                 Text("Your Personal Relationship Command Center!")
                     .font(.title3)
                     .fontWeight(.medium)
-                    .foregroundStyle(Color.peeplyCharcoal.opacity(0.8))
+                    .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                     .multilineTextAlignment(.center)
             }
             .padding(.horizontal, 32)
@@ -238,7 +262,7 @@ struct SplashView: View {
                 VStack(spacing: 16) {
                     Text("Welcome to Peeply!")
                         .font(.system(size: 36, weight: .bold, design: .default))
-                        .foregroundStyle(Color.peeplyWhite)
+                        .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent)
                         .minimumScaleFactor(0.8)
                         .lineLimit(1)
                         .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
@@ -246,13 +270,13 @@ struct SplashView: View {
                     Text("Your Personal Relationship Command Center!")
                         .font(.title3)
                         .fontWeight(.medium)
-                        .foregroundStyle(Color.peeplyWhite.opacity(0.9))
+                        .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent.opacity(0.9))
                         .multilineTextAlignment(.center)
                         .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
 
                     Text("Peeply is a micro-CRM that brings your contacts list to life and helps you focus on developing stronger personal relationships.")
                         .font(.subheadline)
-                        .foregroundStyle(Color.peeplyWhite.opacity(0.85))
+                        .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent.opacity(0.85))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
                 }
@@ -264,34 +288,16 @@ struct SplashView: View {
                 }) {
                     Text("Get Started")
                         .font(.headline)
-                        .foregroundStyle(Color.peeplyCharcoal)
+                        .foregroundStyle(DesignSystem.SemanticColors.brandPrimaryText)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.peeplyWhite)
+                                .fill(DesignSystem.SemanticColors.brandOnAccent)
                         )
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 48)
-            }
-            .background {
-                ZStack {
-                    Image("SplashBackground")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-
-                    LinearGradient(
-                        colors: [
-                            Color.black.opacity(0.1),
-                            Color.black.opacity(0.3),
-                            Color.black.opacity(0.55)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                }
-                .ignoresSafeArea()
             }
         }
     }
