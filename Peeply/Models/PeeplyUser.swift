@@ -2,8 +2,9 @@
 //  PeeplyUser.swift
 //  Peeply
 //
-//  Created by Jason LaChance on 1/18/26.
-//
+//  Copyright 2026 Peeply LLC. All rights reserved.
+//  This software is confidential and proprietary property.
+//  Unauthorized copying, modification, or distribution is strictly prohibited.
 
 import Foundation
 import SwiftData
@@ -22,7 +23,8 @@ final class PeeplyUser {
     var personOfTheDayContactId: UUID?
     var personOfTheDayDate: Date?
     var hasContactedPersonOfTheDay: Bool
-    
+    var myCardContactId: UUID?
+
     init(
         id: UUID = UUID(),
         email: String,
@@ -35,7 +37,8 @@ final class PeeplyUser {
         lastStreakUpdate: Date? = nil,
         personOfTheDayContactId: UUID? = nil,
         personOfTheDayDate: Date? = nil,
-        hasContactedPersonOfTheDay: Bool = false
+        hasContactedPersonOfTheDay: Bool = false,
+        myCardContactId: UUID? = nil
     ) {
         self.id = id
         self.email = email
@@ -49,5 +52,6 @@ final class PeeplyUser {
         self.personOfTheDayContactId = personOfTheDayContactId
         self.personOfTheDayDate = personOfTheDayDate
         self.hasContactedPersonOfTheDay = hasContactedPersonOfTheDay
+        self.myCardContactId = myCardContactId
     }
 }

@@ -1,8 +1,10 @@
 //
-//  ContactListView.swift
-//  Peeply
+// ContactListView.swift
+// Peeply
 //
-//  Created by Jason LaChance on 1/18/26.
+// Copyright 2026 Peeply LLC. All rights reserved.
+// This software is confidential and proprietary property.
+// Unauthorized copying, modification, or distribution is strictly prohibited.
 //
 
 import SwiftUI
@@ -11,12 +13,17 @@ import UIKit
 
 struct ContactListView: View {
     @Binding var navigationPath: NavigationPath
-    @Query(sort: [
-        SortDescriptor(\Contact.displaySortKey, order: .forward),
-        SortDescriptor(\Contact.firstName, order: .forward)
-    ]) private var contacts: [Contact]
+
+    @Query(
+        sort: [
+            SortDescriptor(\Contact.displaySortKey, order: .forward),
+            SortDescriptor(\Contact.firstName, order: .forward)
+        ]
+    ) private var contacts: [Contact]
+
     @Query private var users: [PeeplyUser]
     @Environment(\.modelContext) private var modelContext
+
     @State private var selectedContact: Contact?
     @State private var showDatePicker = false
     @State private var selectedDate = Date()
@@ -44,6 +51,10 @@ struct ContactListView: View {
     @State private var contactPendingDeletion: Contact?
     @State private var showDeleteConfirmation = false
 
+    // My Card feature state
+    @State private var showMyCardSelector = false
+    @State private var showMyBusinessCard = false
+
     private var sortedContacts: [Contact] {
         // Contacts are now sorted at the SwiftData query layer using displaySortKey
         // to preserve the old "last name if present, otherwise first name" behavior
@@ -52,11 +63,12 @@ struct ContactListView: View {
     }
 
     private var filteredContacts: [Contact] {
-        let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !query.isEmpty else { return sortedContacts }
+
         return sortedContacts.filter { contact in
-            contact.firstName.lowercased().contains(query)
-            || (contact.lastName?.lowercased() ?? "").contains(query)
+            contact.firstName.lowercased().contains(query) ||
+            (contact.lastName?.lowercased() ?? "").contains(query)
         }
     }
 
@@ -79,27 +91,6 @@ struct ContactListView: View {
         }
     }
 
-    private func formatPhoneNumber(_ phone: String) -> String {
-        let digits = phone.filter(\.isNumber)
-
-        if digits.count == 10 {
-            let area = digits.prefix(3)
-            let mid = digits.dropFirst(3).prefix(3)
-            let last = digits.suffix(4)
-            return "(\(area)) \(mid)-\(last)"
-        }
-
-        if digits.count == 11, digits.first == "1" {
-            let rest = String(digits.dropFirst())
-            let area = rest.prefix(3)
-            let mid = rest.dropFirst(3).prefix(3)
-            let last = rest.suffix(4)
-            return "+1 (\(area)) \(mid)-\(last)"
-        }
-
-        return phone
-    }
-
     private func initials(for contact: Contact) -> String {
         let firstInitial = contact.firstName.prefix(1).uppercased()
         let lastInitial = contact.lastName?.prefix(1).uppercased() ?? ""
@@ -119,6 +110,59 @@ struct ContactListView: View {
 
     private var currentUser: PeeplyUser? {
         users.first
+    }
+
+    private var myCardContact: Contact? {
+        guard let myCardContactId = currentUser?.myCardContactId else { return nil }
+        return sortedContacts.first(where: { $0.id == myCardContactId })
+    }
+
+    // Extracted My Card sheet content to reduce type-checking complexity
+    // in the main body modifier chain and keep the sheet call site lightweight.
+    private var myBusinessCardSheetContent: some View {
+        Group {
+            if let contact = myCardContact,
+               let payload = BusinessCardPayload(contact: contact) {
+                MyBusinessCardSheet(
+                    payload: payload,
+                    onChooseDifferentContact: {
+                        showMyBusinessCard = false
+                        showMyCardSelector = true
+                    },
+                    onClose: {
+                        showMyBusinessCard = false
+                    }
+                )
+            } else {
+                invalidMyCardFallbackView
+            }
+        }
+    }
+
+    // Fallback view extracted from the sheet closure so the compiler does not need
+    // to resolve a large conditional NavigationStack inline inside the .sheet modifier.
+    private var invalidMyCardFallbackView: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("Your saved card contact no longer has a phone number or email.")
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(DesignSystem.SemanticColors.primaryText)
+
+                Button("Choose Contact") {
+                    currentUser?.myCardContactId = nil
+                    try? modelContext.save()
+                    showMyBusinessCard = false
+                    showMyCardSelector = true
+                }
+                .fontWeight(.semibold)
+                .foregroundStyle(DesignSystem.SemanticColors.accent)
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(DesignSystem.SemanticColors.groupedScreenBackground)
+            .navigationTitle("My Card")
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 
     private var newContactsThisMonth: Int {
@@ -181,9 +225,6 @@ struct ContactListView: View {
 
         randomContacts = selected
         showRandomizer = true
-
-        // Haptic feedback
-        hapticGenerator.impactOccurred()
     }
 
     private func openContactDetail(_ contact: Contact) {
@@ -202,20 +243,21 @@ struct ContactListView: View {
 
     private func saveNewContact() {
         let trimmedFirstName = newContactFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedFirstName.isEmpty else { return }
+        
         let trimmedLastName = newContactLastName.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPhone = newContactPhone.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedEmail = newContactEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedCompany = newContactCompany.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !trimmedFirstName.isEmpty else { return }
 
         let contact = Contact(
-            firstName: trimmedFirstName,
-            lastName: trimmedLastName.isEmpty ? nil : trimmedLastName,
-            phoneNumbers: trimmedPhone.isEmpty ? [] : [trimmedPhone],
-            emails: trimmedEmail.isEmpty ? [] : [trimmedEmail],
-            company: trimmedCompany.isEmpty ? nil : trimmedCompany
-        )
+                    firstName: trimmedFirstName,
+                    lastName: trimmedLastName.isEmpty ? nil : trimmedLastName,
+                    phoneNumbers: trimmedPhone.isEmpty ? [] : [trimmedPhone],
+                    emails: trimmedEmail.isEmpty ? [] : [trimmedEmail],
+                    company: trimmedCompany.isEmpty ? nil : trimmedCompany
+                )
 
         modelContext.insert(contact)
         try? modelContext.save()
@@ -225,6 +267,11 @@ struct ContactListView: View {
 
     private func discardNewContact() {
         showAddContactSheet = false
+        newContactFirstName = ""
+        newContactLastName = ""
+        newContactPhone = ""
+        newContactEmail = ""
+        newContactCompany = ""
     }
 
     private func confirmDelete(_ contact: Contact) {
@@ -235,29 +282,40 @@ struct ContactListView: View {
     private func deletePendingContact() {
         guard let contact = contactPendingDeletion else { return }
 
-        // If this contact is the active Person of the Day, clear the active POD state
-        // so startup routing does not point at a deleted record.
-        if let user = currentUser, user.personOfTheDayContactId == contact.id {
-            user.personOfTheDayContactId = nil
-            user.personOfTheDayDate = nil
-            user.hasContactedPersonOfTheDay = false
+        if currentUser?.myCardContactId == contact.id {
+            currentUser?.myCardContactId = nil
         }
-
-        if selectedContact?.id == contact.id {
-            selectedContact = nil
-            showDatePicker = false
-        }
-
-        if contactToOpenAfterSheetDismiss?.id == contact.id {
-            contactToOpenAfterSheetDismiss = nil
-        }
-
-        randomContacts.removeAll { $0.id == contact.id }
 
         modelContext.delete(contact)
         try? modelContext.save()
-
         contactPendingDeletion = nil
+    }
+
+    private func openMyCard() {
+        if myCardContact != nil {
+            showMyBusinessCard = true
+        } else {
+            showMyCardSelector = true
+        }
+    }
+
+    private func selectMyCardContact(_ contact: Contact) {
+        if currentUser == nil {
+            let newUser = PeeplyUser(
+                email: "",
+                subscriptionTier: .gettingStarted
+            )
+            modelContext.insert(newUser)
+            try? modelContext.save()
+        }
+
+        currentUser?.myCardContactId = contact.id
+        try? modelContext.save()
+
+        showMyCardSelector = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            showMyBusinessCard = true
+        }
     }
 
     private func streakCard(user: PeeplyUser?) -> some View {
@@ -269,7 +327,7 @@ struct ContactListView: View {
                 HStack {
                     // Icon square
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.peeplyCream)
+                        .fill(DesignSystem.SemanticColors.secondaryGroupedBackground)
                         .frame(width: 52, height: 52)
                         .overlay(
                             Text("🔥")
@@ -281,28 +339,28 @@ struct ContactListView: View {
                     // Arrow icon
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.5))
+                        .foregroundStyle(DesignSystem.SemanticColors.tertiaryText)
                 }
 
                 // Number
                 if let user = user, user.currentStreak > 0 {
                     Text("\(user.currentStreak)")
                         .font(.system(size: 20, weight: .bold, design: .default))
-                        .foregroundStyle(Color.peeplyCharcoal)
+                        .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                 } else {
                     Text("0")
                         .font(.system(size: 20, weight: .bold, design: .default))
-                        .foregroundStyle(Color.peeplyCharcoal)
+                        .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                 }
 
                 // Descriptive text
-                Text("Daily one-to-one Streak")
+                Text("Daily one-to-one\nStreak")
                     .font(.system(size: 12, weight: .regular, design: .default))
-                    .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
+                    .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
             }
             .padding(16)
             .frame(maxWidth: .infinity)
-            .background(Color.peeplyWhite)
+            .background(DesignSystem.SemanticColors.cardBackground)
             .cornerRadius(20)
         }
         .buttonStyle(.plain)
@@ -314,12 +372,12 @@ struct ContactListView: View {
             HStack {
                 // Icon square
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.peeplyCream)
+                    .fill(DesignSystem.SemanticColors.secondaryGroupedBackground)
                     .frame(width: 52, height: 52)
                     .overlay(
                         Image(systemName: "arrow.up")
                             .font(.system(size: 24, weight: .medium))
-                            .foregroundStyle(Color.peeplyCharcoal)
+                            .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                     )
 
                 Spacer()
@@ -327,22 +385,22 @@ struct ContactListView: View {
                 // Arrow icon
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.peeplyCharcoal.opacity(0.5))
+                    .foregroundStyle(DesignSystem.SemanticColors.tertiaryText)
             }
 
             // Number
             Text("\(newContactsThisMonth)")
                 .font(.system(size: 20, weight: .bold, design: .default))
-                .foregroundStyle(Color.peeplyCharcoal)
+                .foregroundStyle(DesignSystem.SemanticColors.primaryText)
 
             // Descriptive text
-            Text("New Contacts Added this Month")
+            Text("New Contacts Added\nthis Month")
                 .font(.system(size: 12, weight: .regular, design: .default))
-                .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
+                .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Color.peeplyWhite)
+        .background(DesignSystem.SemanticColors.cardBackground)
         .cornerRadius(20)
     }
 
@@ -360,15 +418,15 @@ struct ContactListView: View {
                     Text("\(user.currentStreak) Day Streak!")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundStyle(Color.peeplyCharcoal)
+                        .foregroundStyle(DesignSystem.SemanticColors.primaryText)
+                        .padding(24)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(DesignSystem.SemanticColors.cardBackground)
+                                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                        )
                 }
             }
-            .padding(24)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.peeplyWhite)
-                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-            )
             .padding(.horizontal, 40)
             .scaleEffect(showStreakCelebration ? 1.0 : 0.8)
             .opacity(showStreakCelebration ? 1.0 : 0.0)
@@ -380,45 +438,74 @@ struct ContactListView: View {
         VStack(spacing: 0) {
             // Custom navigation bar
             HStack {
+                Button(action: openMyCard) {
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(DesignSystem.SemanticColors.toolbarIcon)
+                        .frame(width: 40, height: 40)
+                        .background(DesignSystem.SemanticColors.cardBackground)
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(DesignSystem.SemanticColors.border, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+
                 Spacer()
 
                 // Title
                 Text("Contacts")
                     .font(.system(size: 20, weight: .medium, design: .default))
-                    .foregroundStyle(Color.peeplyCharcoal)
+                    .foregroundStyle(DesignSystem.SemanticColors.primaryText)
 
                 Spacer()
+
+                // Balance the title visually
+                Color.clear
+                    .frame(width: 40, height: 40)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color.peeplyWhite)
+            .background(DesignSystem.SemanticColors.navigationBackground)
 
-            // Search bar (shown when Search tab or nav icon is tapped)
+            // Search bar shown when Search tab or nav icon is tapped
             if showSearch {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
+                        .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
 
                     TextField("Search contacts", text: $searchText)
                         .font(.system(size: 16, weight: .regular))
-                        .foregroundStyle(Color.peeplyCharcoal)
+                        .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .focused($isSearchFieldFocused)
                         .overlay(alignment: .trailing) {
                             if !searchText.isEmpty {
-                                Button(action: { searchText = "" }) {
+                                Button(action: {
+                                    searchText = ""
+                                }) {
                                     Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
+                                        .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                                 }
                                 .padding(.trailing, 4)
                             }
                         }
                 }
                 .padding(12)
-                .background(Color.peeplyBackground)
+                .background(DesignSystem.SemanticColors.inputBackground)
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(DesignSystem.SemanticColors.border, lineWidth: 1)
+                )
                 .padding(.horizontal, 16)
-                .onAppear { isSearchFieldFocused = true }
+                .padding(.top, 8)
+                .background(DesignSystem.SemanticColors.groupedScreenBackground)
+                .onAppear {
+                    isSearchFieldFocused = true
+                }
             }
 
             // Content
@@ -428,15 +515,17 @@ struct ContactListView: View {
                     HStack(spacing: 12) {
                         streakCard(user: currentUser)
 
-                        Button(action: { showNewContactsSheet = true }) {
+                        Button(action: {
+                            showNewContactsSheet = true
+                        }) {
                             growthTrackingCard
                         }
                         .buttonStyle(.plain)
                     }
-                    .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(Color.peeplyBackground)
-                    .listRowSeparator(.hidden)
                 }
+                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(DesignSystem.SemanticColors.groupedScreenBackground)
+                .listRowSeparator(.hidden)
 
                 // Contact list
                 Section {
@@ -454,8 +543,8 @@ struct ContactListView: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color(red: 232/255, green: 180/255, blue: 184/255), // #E8B4B8 deeper rose/pink
-                                                Color.peeplyCream // #F5E6C8 cream
+                                                Color(red: 232 / 255, green: 180 / 255, blue: 184 / 255),
+                                                DesignSystem.cream
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -465,7 +554,7 @@ struct ContactListView: View {
                                     .overlay(
                                         Text(initials(for: contact))
                                             .font(.system(size: 18, weight: .semibold))
-                                            .foregroundStyle(Color.peeplyWhite)
+                                            .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent)
                                     )
                             }
 
@@ -476,7 +565,7 @@ struct ContactListView: View {
                                 }) {
                                     Text(fullName(for: contact))
                                         .font(.system(size: 16, weight: .medium, design: .default))
-                                        .foregroundStyle(Color.peeplyCharcoal)
+                                        .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                                 .buttonStyle(.plain)
@@ -486,11 +575,13 @@ struct ContactListView: View {
                                 }) {
                                     Text("Last one-to-one: \(formattedDateString(for: contact))")
                                         .font(.system(size: 12, weight: .regular, design: .default))
-                                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.7))
+                                        .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                                 .buttonStyle(.plain)
                             }
+
+                            Spacer()
 
                             // Chevron
                             Button(action: {
@@ -498,16 +589,19 @@ struct ContactListView: View {
                             }) {
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundStyle(Color.peeplyCharcoal.opacity(0.5))
+                                    .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                             }
                             .buttonStyle(.plain)
+                            .padding(12)
+                            .background(DesignSystem.SemanticColors.cardBackground)
+                            .cornerRadius(20)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(DesignSystem.SemanticColors.border, lineWidth: 1)
+                            )
                         }
-                        .padding(12)
-                        .background(Color.peeplyWhite)
-                        .cornerRadius(20)
-                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 0)
                         .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                        .listRowBackground(Color.peeplyBackground)
+                        .listRowBackground(DesignSystem.SemanticColors.groupedScreenBackground)
                         .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
@@ -515,15 +609,15 @@ struct ContactListView: View {
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
-                            .buttonStyle(.automatic)
                         }
                     }
                 }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Color.peeplyBackground)
+            .background(DesignSystem.SemanticColors.groupedScreenBackground)
         }
+        .background(DesignSystem.SemanticColors.groupedScreenBackground)
         .navigationBarHidden(true)
         .safeAreaInset(edge: .bottom) {
             // Bottom tab bar
@@ -536,10 +630,12 @@ struct ContactListView: View {
                     VStack(spacing: 4) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 22, weight: .regular))
+                            .foregroundStyle(DesignSystem.SemanticColors.toolbarIcon)
+
                         Text("Search")
                             .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                     }
-                    .foregroundStyle(Color.peeplyCharcoal)
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
@@ -549,10 +645,12 @@ struct ContactListView: View {
                     VStack(spacing: 4) {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 32))
+                            .foregroundStyle(DesignSystem.SemanticColors.accent)
+
                         Text("Add")
                             .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                     }
-                    .foregroundStyle(Color.peeplyCharcoal)
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
@@ -564,10 +662,12 @@ struct ContactListView: View {
                     VStack(spacing: 4) {
                         Image(systemName: "headphones")
                             .font(.system(size: 22, weight: .regular))
+                            .foregroundStyle(DesignSystem.SemanticColors.toolbarIcon)
+
                         Text("Support")
                             .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                     }
-                    .foregroundStyle(Color.peeplyCharcoal)
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
@@ -604,10 +704,11 @@ struct ContactListView: View {
                 Text("Start a new streak today!")
             }
         }
-        .alert("Delete Contact", isPresented: $showDeleteConfirmation, presenting: contactPendingDeletion) { contact in
+        .alert("Delete Contact", isPresented: $showDeleteConfirmation, presenting: contactPendingDeletion) { _ in
             Button("Delete", role: .destructive) {
                 deletePendingContact()
             }
+
             Button("Cancel", role: .cancel) {
                 contactPendingDeletion = nil
             }
@@ -644,9 +745,9 @@ struct ContactListView: View {
             SupportView()
         }
         .sheet(isPresented: $showNewContactsSheet, onDismiss: {
-            if let c = contactToOpenAfterSheetDismiss {
-                navigationPath.append(AppRoute.contactDetail(c))
-                contactToOpenAfterSheetDismiss = nil
+            if let contactToOpenAfterSheetDismiss {
+                navigationPath.append(AppRoute.contactDetail(contactToOpenAfterSheetDismiss))
+                self.contactToOpenAfterSheetDismiss = nil
             }
         }) {
             NavigationStack {
@@ -657,20 +758,20 @@ struct ContactListView: View {
                     }) {
                         Text(fullName(for: contact))
                             .font(.system(size: 16, weight: .regular, design: .default))
-                            .foregroundStyle(Color.peeplyCharcoal)
+                            .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                     }
                 }
                 .navigationTitle("New Contacts This Month")
                 .navigationBarTitleDisplayMode(.inline)
                 .scrollContentBackground(.hidden)
-                .background(Color.peeplyBackground)
+                .background(DesignSystem.SemanticColors.groupedScreenBackground)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") {
                             showNewContactsSheet = false
                         }
                         .fontWeight(.medium)
-                        .foregroundStyle(Color.peeplyCharcoal)
+                        .foregroundStyle(DesignSystem.SemanticColors.primaryText)
                     }
                 }
             }
@@ -685,6 +786,19 @@ struct ContactListView: View {
                 onSave: saveNewContact,
                 onDiscard: discardNewContact
             )
+        }
+        .sheet(isPresented: $showMyCardSelector) {
+            MyCardSelectorSheet(
+                contacts: sortedContacts,
+                selectedContactId: currentUser?.myCardContactId,
+                onSelect: selectMyCardContact,
+                onCancel: {
+                    showMyCardSelector = false
+                }
+            )
+        }
+        .sheet(isPresented: $showMyBusinessCard) {
+            myBusinessCardSheetContent
         }
     }
 }
@@ -734,12 +848,12 @@ struct ContactRandomizerSheet: View {
                     Text("You have activated the Peeply Randomizer! Here are the lucky people who get to hear from you today!")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundStyle(Color.peeplyPink)
+                        .foregroundStyle(DesignSystem.SemanticColors.accent)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
+                        .padding(.top, 32)
+                        .padding(.bottom, 24)
                 }
-                .padding(.top, 32)
-                .padding(.bottom, 24)
 
                 // Contact list
                 if contacts.isEmpty {
@@ -764,7 +878,7 @@ struct ContactRandomizerSheet: View {
                                     Circle()
                                         .fill(
                                             LinearGradient(
-                                                colors: [Color.peeplyRose, Color.peeplyLavender],
+                                                colors: [DesignSystem.rose, DesignSystem.lavender],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             )
@@ -773,7 +887,7 @@ struct ContactRandomizerSheet: View {
                                         .overlay(
                                             Text(initials(for: contact))
                                                 .font(.system(size: 18, weight: .semibold))
-                                                .foregroundStyle(Color.peeplyWhite)
+                                                .foregroundStyle(DesignSystem.SemanticColors.brandOnAccent)
                                         )
                                 }
 
@@ -801,7 +915,7 @@ struct ContactRandomizerSheet: View {
 
                     Text("📸 Take a screenshot! Once you close or navigate away from this unique Randomizer list you will not be able to return to it.")
                         .font(.caption)
-                        .foregroundStyle(Color.peeplyCharcoal.opacity(0.6))
+                        .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
                         .padding(.bottom, 16)
@@ -815,9 +929,9 @@ struct ContactRandomizerSheet: View {
                         .fontWeight(.semibold)
                 }
             }
-            .onShake {
-                onShake()
-            }
+        }
+        .onShake {
+            onShake()
         }
     }
 
@@ -845,6 +959,7 @@ struct DatePickerSheet: View {
     @Binding var selectedDate: Date
     let onSave: () -> Void
     let onCancel: () -> Void
+
     @State private var hapticGenerator = UIImpactFeedbackGenerator(style: .light)
 
     var body: some View {
@@ -880,8 +995,8 @@ struct DatePickerSheet: View {
                         .fontWeight(.semibold)
                 }
             }
-            .presentationDetents([.medium])
         }
+        .presentationDetents([.medium])
     }
 }
 
@@ -910,10 +1025,12 @@ struct AddContactSheet: View {
                 Section("Contact Info") {
                     TextField("Phone", text: $phoneNumber)
                         .keyboardType(.phonePad)
+
                     TextField("Email", text: $email)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+
                     TextField("Company", text: $company)
                 }
             }
@@ -930,14 +1047,14 @@ struct AddContactSheet: View {
                         .disabled(!canSave)
                 }
             }
-            .presentationDetents([.large])
         }
+        .presentationDetents([.large])
     }
 }
 
 #Preview {
     NavigationStack {
         ContactListView(navigationPath: .constant(NavigationPath()))
-            .modelContainer(for: Contact.self, inMemory: true)
+            .modelContainer(for: [Contact.self, PeeplyUser.self], inMemory: true)
     }
 }

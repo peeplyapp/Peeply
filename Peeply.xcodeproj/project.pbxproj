@@ -40,6 +40,11 @@
 		E7F8A1B42F900000001E4E1B /* PeeplySchemaV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F8A1B32F900000001E4E1A /* PeeplySchemaV1.swift */; };
 		E7F8A1B62F900000001E4E1D /* PeeplyMigrationPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7F8A1B52F900000001E4E1C /* PeeplyMigrationPlan.swift */; };
 		EC0367BB2FE025CF00ADFE36 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC0367BA2FE025CF00ADFE36 /* DesignSystem.swift */; };
+		EC0367BD2FF38C5600ADFE36 /* BusinessCardPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC0367BC2FF38C5600ADFE36 /* BusinessCardPayload.swift */; };
+		EC0367BF2FF38D0E00ADFE36 /* VCardBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC0367BE2FF38D0E00ADFE36 /* VCardBuilder.swift */; };
+		EC0367C12FF38D5900ADFE36 /* QRCodeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC0367C02FF38D5900ADFE36 /* QRCodeService.swift */; };
+		EC0367C32FF38DA500ADFE36 /* MyCardSelectorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC0367C22FF38DA500ADFE36 /* MyCardSelectorSheet.swift */; };
+		EC0367C52FF38DE200ADFE36 /* MyBusinessCardSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC0367C42FF38DE200ADFE36 /* MyBusinessCardSheet.swift */; };
 		EC4E541D2FBBCB2800117043 /* ContactSortKeyMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC4E541C2FBBCB2800117043 /* ContactSortKeyMigration.swift */; };
 		F5E70FB42E6C434591126597 /* PeeplyUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E70FB42E6C434591126596 /* PeeplyUser.swift */; };
 /* End PBXBuildFile section */
@@ -96,6 +101,11 @@
 		E7F8A1B32F900000001E4E1A /* PeeplySchemaV1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeeplySchemaV1.swift; sourceTree = "<group>"; };
 		E7F8A1B52F900000001E4E1C /* PeeplyMigrationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeeplyMigrationPlan.swift; sourceTree = "<group>"; };
 		EC0367BA2FE025CF00ADFE36 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		EC0367BC2FF38C5600ADFE36 /* BusinessCardPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BusinessCardPayload.swift; sourceTree = "<group>"; };
+		EC0367BE2FF38D0E00ADFE36 /* VCardBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VCardBuilder.swift; sourceTree = "<group>"; };
+		EC0367C02FF38D5900ADFE36 /* QRCodeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeService.swift; sourceTree = "<group>"; };
+		EC0367C22FF38DA500ADFE36 /* MyCardSelectorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyCardSelectorSheet.swift; sourceTree = "<group>"; };
+		EC0367C42FF38DE200ADFE36 /* MyBusinessCardSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyBusinessCardSheet.swift; sourceTree = "<group>"; };
 		EC4E541C2FBBCB2800117043 /* ContactSortKeyMigration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactSortKeyMigration.swift; sourceTree = "<group>"; };
 		F5E70FB42E6C434591126596 /* PeeplyUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeeplyUser.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -198,6 +208,11 @@
 				96BF2D322F1D8DD6001E4E1F /* Preview Content */,
 				961C5F152F75790C00AE3474 /* Assets.xcassets */,
 				EC0367BA2FE025CF00ADFE36 /* DesignSystem.swift */,
+				EC0367BC2FF38C5600ADFE36 /* BusinessCardPayload.swift */,
+				EC0367BE2FF38D0E00ADFE36 /* VCardBuilder.swift */,
+				EC0367C02FF38D5900ADFE36 /* QRCodeService.swift */,
+				EC0367C22FF38DA500ADFE36 /* MyCardSelectorSheet.swift */,
+				EC0367C42FF38DE200ADFE36 /* MyBusinessCardSheet.swift */,
 			);
 			path = Peeply;
 			sourceTree = "<group>";
@@ -365,15 +380,20 @@
 				962C1A132F46376E002A20B2 /* TermsOfServiceView.swift in Sources */,
 				96BF2D2F2F1D8DD3001E4E1F /* ContentView.swift in Sources */,
 				EC4E541D2FBBCB2800117043 /* ContactSortKeyMigration.swift in Sources */,
+				EC0367BF2FF38D0E00ADFE36 /* VCardBuilder.swift in Sources */,
 				96992ACD2F2C4B36002914BC /* SplashView.swift in Sources */,
+				EC0367C32FF38DA500ADFE36 /* MyCardSelectorSheet.swift in Sources */,
 				96992ACF2F2E5F31002914BC /* StreakManager.swift in Sources */,
 				962C1A0F2F463498002A20B2 /* AboutView.swift in Sources */,
+				EC0367C12FF38D5900ADFE36 /* QRCodeService.swift in Sources */,
 				96BF2D2D2F1D8DD3001E4E1F /* PeeplyApp.swift in Sources */,
 				96BF2D502F1D8DD8001E4E1F /* RootView.swift in Sources */,
 				96992AD12F3270F2002914BC /* PersonOfTheDayManager.swift in Sources */,
 				96BF2D522F1D8DD8001E4E1F /* AppRoute.swift in Sources */,
 				96BF2D542F1D8DD8001E4E1F /* PlanSelectionView.swift in Sources */,
 				962C1A0D2F46297C002A20B2 /* SupportView.swift in Sources */,
+				EC0367BD2FF38C5600ADFE36 /* BusinessCardPayload.swift in Sources */,
+				EC0367C52FF38DE200ADFE36 /* MyBusinessCardSheet.swift in Sources */,
 				96BF2D562F1D8DD8001E4E1F /* OnboardingView.swift in Sources */,
 				96BF2D582F1D8DD8001E4E1F /* ContactImportView.swift in Sources */,
 				96BF2D5A2F1D8DD8001E4E1F /* ContactListView.swift in Sources */,
