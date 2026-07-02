@@ -388,13 +388,21 @@ struct MyBusinessCardSheet: View {
 
     private var qrCardView: some View {
         VStack(spacing: 12) {
-            if let qrCodeImage {
-                Image(uiImage: qrCodeImage)
-                    .interpolation(.none)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 300, maxHeight: 300)
+            ZStack {
+                if let qrCodeImage {
+                    Image(uiImage: qrCodeImage)
+                        .interpolation(.none)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 300, maxHeight: 300)
+                }
+
+                // Premium center badge:
+                // overlay a small contact photo or initials badge without altering
+                // the underlying QR generation pipeline.
+                qrCenterBadge
             }
+            .frame(maxWidth: .infinity)
 
             Text("Your contact card is ready to share")
                 .font(.caption)
@@ -471,6 +479,42 @@ struct MyBusinessCardSheet: View {
                         .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
                 )
         }
+    }
+
+    @ViewBuilder
+    private var qrCenterBadge: some View {
+        ZStack {
+            // Outer white ring improves separation from the QR modules and helps
+            // preserve scan reliability while giving the badge a premium treatment.
+            Circle()
+                .fill(Color.white)
+                .frame(width: 72, height: 72)
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+
+            // Inner plate keeps the badge aligned with the card styling.
+            Circle()
+                .fill(DesignSystem.SemanticColors.cardBackground)
+                .frame(width: 64, height: 64)
+
+            if let photoData = payload.photoData, let image = UIImage(data: photoData) {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 56, height: 56)
+                    .clipShape(Circle())
+            } else {
+                // Fallback to initials so every card has a consistent premium center mark.
+                Circle()
+                    .fill(DesignSystem.SemanticColors.secondaryGroupedBackground)
+                    .frame(width: 56, height: 56)
+                    .overlay(
+                        Text(initials)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(DesignSystem.SemanticColors.secondaryText)
+                    )
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     private var initials: String {
