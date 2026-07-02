@@ -2,8 +2,9 @@
 //  Contact.swift
 //  Peeply
 //
-//  Created by Jason LaChance on 1/18/26.
-//
+//  Copyright 2026 Peeply LLC. All rights reserved.
+//  This software is confidential and proprietary property.
+//  Unauthorized copying, modification, or distribution is strictly prohibited.
 
 import Foundation
 import SwiftData
@@ -25,7 +26,7 @@ final class Contact {
     var socialMediaLinks: [String: String] // Platform name -> URL/username
     var createdAt: Date?
     var wasPersonOfTheDay: Date?
-    var displaySortKey: String // Persisted sort key used to preserve "last name if present, otherwise first name" ordering at fetch time
+    var displaySortKey: String // Persisted sort key used to preserve last name if present, otherwise first name ordering at fetch time
 
     init(
         id: UUID = UUID(),
@@ -73,5 +74,52 @@ final class Contact {
 
     func refreshDisplaySortKey() {
         displaySortKey = Contact.makeDisplaySortKey(firstName: firstName, lastName: lastName)
+    }
+}
+
+// MARK: - Business Card Helpers
+extension Contact {
+    /// Full display name used across the app for headings and selection rows.
+    var fullName: String {
+        let trimmedLastName = lastName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if trimmedLastName.isEmpty {
+            return firstName
+        } else {
+            return "\(firstName) \(trimmedLastName)"
+        }
+    }
+
+    /// Initials fallback for contacts without a photo.
+    var initials: String {
+        let firstInitial = firstName.prefix(1).uppercased()
+        let lastInitial = lastName?.prefix(1).uppercased() ?? ""
+        return firstInitial + lastInitial
+    }
+
+    /// Reusable validation rule for features that require a contact to have at least
+    /// one reachable professional detail. This mirrors the import-time concept that
+    /// a contact should have a phone number or email to be considered usable.
+    var hasBusinessCardReachability: Bool {
+        !sanitizedPhoneNumbers.isEmpty || !sanitizedEmails.isEmpty
+    }
+
+    /// Phone numbers trimmed for business-card use.
+    var sanitizedPhoneNumbers: [String] {
+        phoneNumbers
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    /// Email addresses trimmed for business-card use.
+    var sanitizedEmails: [String] {
+        emails
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    /// Professional-only payload eligibility check for the MVP QR card.
+    var canBeUsedForMyCard: Bool {
+        let trimmedFirstName = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmedFirstName.isEmpty && hasBusinessCardReachability
     }
 }
